@@ -3,9 +3,9 @@
 # Ubuntu Dev Container — Browser automation + dev essentials
 ###############################################################################
 # Access:
-#   noVNC  : http://localhost:6080/vnc.html       (browser VNC)
-#   CDP    : ws://localhost:9222                  (Playwright/Puppeteer)
-#   VNC    : vnc://localhost:5900                 (desktop VNC client)
+#   noVNC  : http://localhost:6080/vnc.html
+#   CDP    : ws://localhost:9222
+#   VNC    : vnc://localhost:5900
 ###############################################################################
 
 ARG BASE_IMAGE=ubuntu:24.04
@@ -17,40 +17,36 @@ LABEL org.opencontainers.image.title="Ubuntu Dev Container" \
       org.opencontainers.image.licenses="MIT"
 
 ###############################################################################
-# Install system dependencies — only packages that exist in Ubuntu 24.04 repos
+# All system deps in one layer — avoids partial-layer cache issues
 ###############################################################################
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update -qq && \
     apt-get install -y --no-install-recommends \
-        curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release && \
-    apt-get install -y --no-install-recommends \
+        curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release \
         build-essential gcc g++ make cmake pkg-config \
-        libssl-dev libffi-dev zlib1g-dev && \
-    apt-get install -y --no-install-recommends \
-        python3 python3-pip python3-venv python3-dev python3-setuptools && \
-    apt-get install -y --no-install-recommends \
-        openssh-client openssh-server && \
-    apt-get install -y --no-install-recommends \
-        tmux htop tree ncdu lsof netcat ping strace procps && \
-    apt-get install -y --no-install-recommends \
-        parallel direnv sudo locales tzdata man-db less vim nano && \
-    apt-get install -y --no-install-recommends \
-        xvfb x11vnc websockify && \
-    apt-get install -y --no-install-recommends \
+        libssl-dev libffi-dev zlib1g-dev \
+        python3 python3-pip python3-venv python3-dev python3-setuptools \
+        openssh-client openssh-server \
+        tmux htop tree ncdu lsof netcat ping strace procps \
+        parallel direnv sudo locales tzdata man-db less vim nano \
+        xvfb x11vnc websockify \
         fonts-firacode fonts-jetbrains-mono fontconfig && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Node.js from NodeSource (avoids universe bloat)
+###############################################################################
+# Node.js from NodeSource
+###############################################################################
 ARG NODE_VERSION=20
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/*
 
 ###############################################################################
-# Binary tools not in Ubuntu repos — version-pinned
+# Binary tools — version-pinned
 ###############################################################################
 
-# GH (GitHub CLI)
+# GH
 ARG GH_VERSION=2.63.0
 RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_linux_amd64.deb -o /tmp/gh.deb && \
     dpkg -i /tmp/gh.deb && rm /tmp/gh.deb
@@ -60,47 +56,47 @@ ARG TERRAFORM_VERSION=1.9.0
 RUN curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o /tmp/terraform.zip && \
     unzip -q /tmp/terraform.zip -d /usr/local/bin/ && rm /tmp/terraform.zip
 
-# ripgrep (faster than grep)
+# ripgrep
 ARG RIPGREP_VERSION=14.1.0
 RUN curl -fsSL https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -o /tmp/ripgrep.tar.gz && \
     tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
     mv /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg && \
     rm -rf /tmp/ripgrep.tar.gz /tmp/ripgrep-*
 
-# fd (alternative to find)
+# fd
 ARG FD_VERSION=9.0.0
 RUN curl -fsSL https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz -o /tmp/fd.tar.gz && \
     tar -xzf /tmp/fd.tar.gz -C /tmp && \
     mv /tmp/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu/fd /usr/local/bin/fd && \
     rm -rf /tmp/fd.tar.gz /tmp/fd-*
 
-# yq (yaml processor — binary, not apt)
+# yq
 ARG YQ_VERSION=4.44.2
 RUN curl -fsSL https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 -o /usr/local/bin/yq && \
     chmod +x /usr/local/bin/yq
 
-# shellcheck (bash linter)
+# shellcheck
 ARG SHELLCHECK_VERSION=0.10.0
 RUN curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o /tmp/shellcheck.tar.xz && \
     tar -xJf /tmp/shellcheck.tar.xz -C /tmp && \
     mv /tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/ && \
     rm -rf /tmp/shellcheck.tar.xz /tmp/shellcheck-*
 
-# yamllint
-RUN pip3 install --break-system-packages yamllint
-
-# hadolint (Dockerfile linter)
+# hadolint
 ARG HADOLINT_VERSION=2.12.0
 RUN curl -fsSL https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint && \
     chmod +x /usr/local/bin/hadolint
 
-# tflint (Terraform linter)
+# tflint
 ARG TFLINT_VERSION=0.52.0
 RUN curl -fsSL https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip -o /tmp/tflint.zip && \
     unzip -q /tmp/tflint.zip -d /usr/local/bin/ && chmod +x /usr/local/bin/tflint && rm /tmp/tflint.zip
 
+# yamllint
+RUN pip3 install --break-system-packages yamllint
+
 ###############################################################################
-# Browser automation — Playwright + Puppeteer
+# Browser automation
 ###############################################################################
 RUN npm install -g playwright@latest puppeteer@latest && \
     npx playwright install chromium --with-deps
@@ -121,7 +117,7 @@ RUN npm install -g pnpm yarn n typescript ts-node ts-node-dev \
                     eslint prettier dotenv-cli
 
 ###############################################################################
-# noVNC (web-based VNC)
+# noVNC
 ###############################################################################
 RUN npm install -g @novnc/novnc && \
     mkdir -p /usr/share/novnc
