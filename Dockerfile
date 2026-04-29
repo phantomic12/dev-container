@@ -135,21 +135,23 @@ ARG WANTED_UID=1000
 ARG WANTED_GID=1000
 ARG USERNAME=dev
 
-RUN group_name=$(getent group ${WANTED_GID} | cut -d: -f1) && \
-    existing_uid=$(getent passwd ${WANTED_UID} | cut -d: -f1) && \
+RUN echo "Checking GID ${WANTED_GID} and UID ${WANTED_UID}..."; \
+    group_name=$(getent group ${WANTED_GID} 2>/dev/null | cut -d: -f1) || true; \
+    existing_uid=$(getent passwd ${WANTED_UID} 2>/dev/null | cut -d: -f1) || true; \
+    echo "Found: GID ${WANTED_GID}=group'$group_name', UID ${WANTED_UID}=user'$existing_uid'"; \
     if [[ "$group_name" == "${USERNAME}" ]] && [[ -z "$existing_uid" ]]; then \
-        echo "Group + user both exist as specified"; \
+        echo "Both group + user exist as specified"; \
     elif [[ -n "$existing_uid" ]]; then \
-        echo "UID ${WANTED_UID} taken by '$existing_uid' — creating dev user with next available UID"; \
+        echo "UID ${WANTED_UID} taken by '$existing_uid' — creating dev user with auto UID"; \
         useradd --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}; \
     else \
-        groupadd --gid ${WANTED_GID} ${USERNAME} && \
+        groupadd --gid ${WANTED_GID} ${USERNAME}; \
         useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}; \
-    fi && \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
-    mkdir -p /home/${USERNAME}/.config/gh && \
-    chown -R ${WANTED_UID}:${WANTED_GID} /home/${USERNAME} && \
-    mkdir -p /workspace /browser-profile && \
+    fi; \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME}; \
+    mkdir -p /home/${USERNAME}/.config/gh; \
+    chown -R ${WANTED_UID}:${WANTED_GID} /home/${USERNAME}; \
+    mkdir -p /workspace /browser-profile; \
     chown ${USERNAME}:${USERNAME} /workspace /browser-profile
 
 USER ${USERNAME}
