@@ -87,17 +87,17 @@ jobs:
           echo "Pulling: ${{ needs.build.outputs.image-tag }}"
           docker pull ${{ needs.build.outputs.image-tag }}
 
-      - name: Start container
+      - name: Start container (override entrypoint to skip startup)
         run: |
           docker run -d --rm \
             --name smoke-test \
             --privileged \
             -e TAILSCALE_AUTH_KEY=*** \
             ${{ needs.build.outputs.image-tag }} \
-            sleep 30
+            tail -f /dev/null
 
       - name: Wait for startup
-        run: sleep 5
+        run: sleep 2
 
       - name: Verify container is running
         run: |
