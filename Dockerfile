@@ -48,7 +48,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
 
 # GH
 ARG GH_VERSION=2.63.0
-RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_linux_amd64.deb -o /tmp/gh.deb && \
+RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.deb -o /tmp/gh.deb && \
     dpkg -i /tmp/gh.deb && rm /tmp/gh.deb
 
 # Terraform
