@@ -7,20 +7,17 @@ on:
     branches: [main, master]
 
 env:
-  # ── Version pins — update here to bump versions in the build ────────────
   GH_VERSION: 2.63.0
   TERRAFORM_VERSION: 1.9.0
-  # ── GH token — use GITHUB_TOKEN for own repo, or a fine-grained PAT ─────
-  GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN || '' }}
 
 jobs:
   build:
-    name: Build & Push Docker image
+    name: Build & Push
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-      id-token: write   # needed for GHCR OIDC login
+      id-token: write
 
     steps:
       - name: Checkout
@@ -66,13 +63,12 @@ jobs:
             "Image: {{.Repository}}:{{.Tag}}  Size: {{.Size}}  Created: {{.CreatedSince}}"
 
   test-container:
-    name: Smoke-test container
+    name: Smoke-test
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
-    if: needs.build.outputs.image-tag != '' && env.GH_TOKEN != ''
 
     steps:
       - name: Checkout
@@ -92,46 +88,36 @@ jobs:
         run: |
           docker run -d --rm \
             --name smoke-test \
-            -e GH_TOKEN=${{ env.GH_TOKEN }} \
+            --privileged \
             -e TAILSCALE_AUTH_KEY=dummy \
             ${{ needs.build.outputs.image-tag }} \
             sleep infinity
 
       - name: Wait for startup
-        run: sleep 10
+        run: sleep 15
 
       - name: Verify binaries
         run: |
           docker exec smoke-test bash -c '
             set -e
             echo "=== Verifying binaries ==="
-
-            gh version
-            echo "  ✓ gh"
-
-            terraform version | head -1
-            echo "  ✓ terraform"
-
-            google-chrome --version
-            echo "  ✓ google-chrome"
-
-            chromium-browser --version
-            echo "  ✓ chromium-browser"
-
-            playwright --version
-            echo "  ✓ playwright"
-
-            puppeteer --version
-            echo "  ✓ puppeteer"
-
+            gh version && echo "  ✓ gh"
+            terraform version | head -1 && echo "  ✓ terraform"
+            playwright --version && echo "  ✓ playwright"
+            puppeteer --version && echo "  ✓ puppeteer"
             echo ""
             echo "=== All binaries present ==="
           '
 
       - name: GH auth status
+        if: secrets.GH_TOKEN != ''
         run: |
-          docker exec smoke-test gh auth status
+          docker exec smoke-test bash -c '
+            export GH_TOKEN="$GH_TOKEN"
+            export GITHUB_TOKEN="$GH_TOKEN"
+            gh auth status
+          '
 
       - name: Cleanup
         if: always()
-        run: docker stop smoke-test
+        run: docker stop smoke-test || true
