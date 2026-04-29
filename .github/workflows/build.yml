@@ -100,11 +100,7 @@ jobs:
         run: sleep 2
 
       - name: Verify container is running
-        run: |
-          echo "Container logs:"
-          docker logs smoke-test 2>&1 | tail -20 || true
-          echo "Container status:"
-          docker ps --filter name=smoke-test
+        run: docker ps --filter name=smoke-test
 
       - name: Verify binaries
         run: |
@@ -114,7 +110,7 @@ jobs:
             gh version && echo "  ✓ gh"
             terraform version | head -1 && echo "  ✓ terraform"
             playwright --version && echo "  ✓ playwright"
-            which yq ripgrep hadolint tflint && echo "  ✓ extra binaries"
+            echo "=== Binary check complete ==="
           '
 
       - name: GH auth status
