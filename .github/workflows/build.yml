@@ -92,12 +92,15 @@ jobs:
           docker run -d --rm \
             --name smoke-test \
             --privileged \
-            -e TAILSCALE_AUTH_KEY=dummy \
+            -e TAILSCALE_AUTH_KEY=*** \
             ${{ needs.build.outputs.image-tag }} \
-            sleep infinity
+            tail -f /dev/null
 
       - name: Wait for startup
-        run: sleep 15
+        run: sleep 5
+
+      - name: Verify container is running
+        run: docker ps --filter name=smoke-test
 
       - name: Verify binaries
         run: |
