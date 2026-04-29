@@ -135,14 +135,17 @@ ARG WANTED_UID=1000
 ARG WANTED_GID=1000
 ARG USERNAME=dev
 
-RUN getent group ${USERNAME} || groupadd --gid ${WANTED_GID} ${USERNAME} || true && \
-    id ${USERNAME} &>/dev/null || useradd --uid ${WANTED_UID} --gid ${WANTED_GID} \
-            --create-home --shell /bin/bash ${USERNAME} && \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${USERNAME} && \
-    chmod 0440 /etc/sudoers.d/${USERNAME} && \
-    usermod -aG sudo ${USERNAME} 2>/dev/null || true && \
+RUN set -e && \
+    echo "Creating group ${USERNAME} with GID ${WANTED_GID}..." && \
+    (getent group ${USERNAME} && echo "Group exists" || groupadd --gid ${WANTED_GID} ${USERNAME}) && \
+    echo "Creating user ${USERNAME} with UID ${WANTED_UID}..." && \
+    (id ${USERNAME} 2>/dev/null && echo "User exists" || useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}) && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
+    echo "User creation complete" && \
+    mkdir -p /home/${USERNAME}/.config/gh && \
+    chown -R ${WANTED_UID}:${WANTED_GID} /home/${USERNAME} && \
     mkdir -p /workspace /browser-profile && \
-    (chown ${USERNAME}:${USERNAME} /workspace /browser-profile 2>/dev/null || true)
+    chown ${USERNAME}:${USERNAME} /workspace /browser-profile
 
 USER ${USERNAME}
 WORKDIR /workspace
