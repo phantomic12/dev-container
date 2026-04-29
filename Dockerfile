@@ -101,7 +101,8 @@ RUN pip3 install --break-system-packages yamllint
 RUN npm install -g playwright@latest puppeteer@latest && \
     npx playwright install chromium --with-deps
 
-RUN pip3 install --break-system-packages \
+RUN pip3 install --break-system-packages --ignore-installed typing_extensions && \
+    pip3 install --break-system-packages \
         playwright pyppeteer selenium webdriver-manager
 
 ###############################################################################
