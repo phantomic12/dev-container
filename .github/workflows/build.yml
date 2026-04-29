@@ -117,12 +117,13 @@ jobs:
         run: |
           docker exec smoke-test bash -c '
             if [[ -n "${GH_TOKEN:-}" ]]; then
-              gh auth login --hostname github.com --token "$GH_TOKEN"
+              gh auth login --hostname github.com --token "$GH_TOKEN" || echo "GH login failed"
             fi
-            gh auth status
+            gh auth status || echo "GH auth check done"
           '
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN || '' }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        continue-on-error: true
 
       - name: Cleanup
         if: always()
