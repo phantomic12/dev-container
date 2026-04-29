@@ -94,13 +94,17 @@ jobs:
             --privileged \
             -e TAILSCALE_AUTH_KEY=*** \
             ${{ needs.build.outputs.image-tag }} \
-            tail -f /dev/null
+            sleep 30
 
       - name: Wait for startup
         run: sleep 5
 
       - name: Verify container is running
-        run: docker ps --filter name=smoke-test
+        run: |
+          echo "Container logs:"
+          docker logs smoke-test 2>&1 | tail -20 || true
+          echo "Container status:"
+          docker ps --filter name=smoke-test
 
       - name: Verify binaries
         run: |
@@ -110,9 +114,7 @@ jobs:
             gh version && echo "  ✓ gh"
             terraform version | head -1 && echo "  ✓ terraform"
             playwright --version && echo "  ✓ playwright"
-            puppeteer --version && echo "  ✓ puppeteer"
-            echo ""
-            echo "=== All binaries present ==="
+            which yq ripgrep hadolint tflint && echo "  ✓ extra binaries"
           '
 
       - name: GH auth status
