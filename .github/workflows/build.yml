@@ -11,7 +11,7 @@ env:
   GH_VERSION: 2.63.0
   TERRAFORM_VERSION: 1.9.0
   # ── GH token — use GITHUB_TOKEN for own repo, or a fine-grained PAT ─────
-  GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+  GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN || '' }}
 
 jobs:
   build:
@@ -72,7 +72,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    if: ${{ secrets.GH_TOKEN != '' }}
+    if: needs.build.outputs.image-tag != '' && env.GH_TOKEN != ''
 
     steps:
       - name: Checkout
