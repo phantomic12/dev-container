@@ -18,6 +18,8 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout
@@ -59,8 +61,8 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker images ghcr.io/${{ github.repository }}:${{ github.sha }} --format \
-            "Image: {{.Repository}}:{{.Tag}}  Size: {{.Size}}  Created: {{.CreatedSince}}"
+          docker images ghcr.io/${{ github.repository }} --format \
+            "{{.Repository}}:{{.Tag}}  {{.Size}}  {{.CreatedSince}}"
 
   test-container:
     name: Smoke-test
@@ -69,8 +71,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-    env:
-      IMAGE_TAG: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
     steps:
       - name: Checkout
@@ -84,7 +84,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull image
-        run: docker pull ${{ env.IMAGE_TAG }}
+        run: |
+          echo "Available tags:"
+          docker images ghcr.io/${{ github.repository }}
+          echo "Pulling: ${{ needs.build.outputs.image-tag }}"
+          docker pull ${{ needs.build.outputs.image-tag }}
 
       - name: Start container
         run: |
@@ -92,7 +96,7 @@ jobs:
             --name smoke-test \
             --privileged \
             -e TAILSCALE_AUTH_KEY=dummy \
-            ${{ env.IMAGE_TAG }} \
+            ${{ needs.build.outputs.image-tag }} \
             sleep infinity
 
       - name: Wait for startup
