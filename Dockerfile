@@ -40,7 +40,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         xvfb x11vnc websockify \
         fonts-firacode fonts-jetbrains-mono fontconfig \
         # Cleanup
-        && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+        || { echo "=== APT FAILED ==="; apt-get update -qq; apt-get install -y --no-install-recommends curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release build-essential gcc g++ make cmake pkg-config libssl-dev libffi-dev zlib1g-dev python3 python3-pip python3-venv python3-dev python3-setuptools nodejs npm openssh-client openssh-server tmux htop tree ncdu lsof netcat ping strace procps parallel direnv sudo locales tzdata man-db less vim nano xvfb x11vnc websockify fonts-firacode fonts-jetbrains-mono fontconfig; } && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ###############################################################################
 # Binary tools not in Ubuntu repos — version-pinned
