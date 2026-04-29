@@ -135,14 +135,14 @@ ARG WANTED_UID=1000
 ARG WANTED_GID=1000
 ARG USERNAME=dev
 
-RUN groupadd --gid ${WANTED_GID} ${USERNAME} && \
-    useradd --uid ${WANTED_UID} --gid ${WANTED_GID} \
+RUN getent group ${USERNAME} || groupadd --gid ${WANTED_GID} ${USERNAME} || true && \
+    id ${USERNAME} &>/dev/null || useradd --uid ${WANTED_UID} --gid ${WANTED_GID} \
             --create-home --shell /bin/bash ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${USERNAME} && \
     chmod 0440 /etc/sudoers.d/${USERNAME} && \
-    usermod -aG sudo ${USERNAME} && \
+    usermod -aG sudo ${USERNAME} 2>/dev/null || true && \
     mkdir -p /workspace /browser-profile && \
-    chown ${USERNAME}:${USERNAME} /workspace /browser-profile
+    (chown ${USERNAME}:${USERNAME} /workspace /browser-profile 2>/dev/null || true)
 
 USER ${USERNAME}
 WORKDIR /workspace
