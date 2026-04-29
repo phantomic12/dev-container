@@ -110,13 +110,15 @@ jobs:
           '
 
       - name: GH auth status
-        if: secrets.GH_TOKEN != ''
         run: |
           docker exec smoke-test bash -c '
-            export GH_TOKEN="$GH_TOKEN"
-            export GITHUB_TOKEN="$GH_TOKEN"
+            if [[ -n "${GH_TOKEN:-}" ]]; then
+              gh auth login --hostname github.com --token "$GH_TOKEN"
+            fi
             gh auth status
           '
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || '' }}
 
       - name: Cleanup
         if: always()
