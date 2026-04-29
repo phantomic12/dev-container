@@ -27,8 +27,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         build-essential gcc g++ make cmake pkg-config \
         libssl-dev libffi-dev zlib1g-dev && \
     apt-get install -y --no-install-recommends \
-        python3 python3-pip python3-venv python3-dev python3-setuptools \
-        nodejs npm && \
+        python3 python3-pip python3-venv python3-dev python3-setuptools && \
     apt-get install -y --no-install-recommends \
         openssh-client openssh-server && \
     apt-get install -y --no-install-recommends \
@@ -40,6 +39,12 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y --no-install-recommends \
         fonts-firacode fonts-jetbrains-mono fontconfig && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Node.js from NodeSource (avoids universe bloat)
+ARG NODE_VERSION=20
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 ###############################################################################
 # Binary tools not in Ubuntu repos — version-pinned
