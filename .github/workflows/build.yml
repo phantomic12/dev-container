@@ -43,16 +43,19 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
 
-      - name: Build image
-        run: |
-          docker build \
-            --build-arg GH_VERSION=${{ env.GH_VERSION }} \
-            --build-arg TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }} \
-            --tag ${{ steps.meta.outputs.tags }} \
-            --provenance true \
-            --sbom true \
-            --push \
-            .
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            GH_VERSION=${{ env.GH_VERSION }}
+            TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }}
+          cache-from: type=gha,mode=max
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
 
       - name: Inspect image
         run: |
