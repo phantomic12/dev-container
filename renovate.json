@@ -2,5 +2,24 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": [
+        "ARG BASE_IMAGE=ubuntu:(?<currentValue>\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "ubuntu",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ubuntu"],
+      "constraints": {
+        "docker": "24.04"
+      }
+    }
   ]
 }

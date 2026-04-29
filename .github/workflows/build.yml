@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build & Push
 
 on:
   push:
@@ -15,12 +15,12 @@ env:
 
 jobs:
   build:
-    name: Build Docker image
+    name: Build & Push Docker image
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
+      packages: write
+      id-token: write   # needed for GHCR OIDC login
 
     steps:
       - name: Checkout
@@ -28,6 +28,13 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker metadata
         id: meta
@@ -39,17 +46,19 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
 
-      - name: Build image (no push)
+      - name: Build and push
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             GH_VERSION=${{ env.GH_VERSION }}
             TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
 
       - name: Inspect image
         run: |
@@ -62,12 +71,19 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # Only run if GH_TOKEN is available for auth test
+      packages: read
     if: env.GH_TOKEN != ''
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull image
         run: docker pull ${{ needs.build.outputs.image-tag }}
