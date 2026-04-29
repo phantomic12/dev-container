@@ -136,11 +136,12 @@ ARG WANTED_GID=1000
 ARG USERNAME=dev
 
 RUN group_name=$(getent group ${WANTED_GID} | cut -d: -f1) && \
-    if [[ "$group_name" == "${USERNAME}" ]]; then \
-        echo "Group ${USERNAME} with GID ${WANTED_GID} already exists"; \
-    elif [[ -n "$group_name" ]]; then \
-        echo "GID ${WANTED_GID} taken by '$group_name' — using existing group"; \
-        useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME} 2>/dev/null || true; \
+    existing_uid=$(getent passwd ${WANTED_UID} | cut -d: -f1) && \
+    if [[ "$group_name" == "${USERNAME}" ]] && [[ -z "$existing_uid" ]]; then \
+        echo "Group + user both exist as specified"; \
+    elif [[ -n "$existing_uid" ]]; then \
+        echo "UID ${WANTED_UID} taken by '$existing_uid' — creating dev user with next available UID"; \
+        useradd --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}; \
     else \
         groupadd --gid ${WANTED_GID} ${USERNAME} && \
         useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}; \
