@@ -27,7 +27,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         libssl-dev libffi-dev zlib1g-dev \
         python3 python3-pip python3-venv python3-dev python3-setuptools \
         openssh-client openssh-server \
-        tmux htop tree ncdu lsof netcat ping strace procps \
+        tmux htop tree ncdu lsof netcat-openbsd iputils-ping strace procps \
         parallel direnv sudo locales tzdata man-db less vim nano \
         xvfb x11vnc websockify \
         fonts-firacode fonts-jetbrains-mono fontconfig && \
