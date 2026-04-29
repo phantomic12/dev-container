@@ -11,6 +11,41 @@
       ],
       "depNameTemplate": "ubuntu",
       "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["^Dockerfile$", "^\\.github/workflows/build\\.yml$"],
+      "matchStrings": [
+        "ARG GO_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "GO_VERSION: (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version"
+    },
+    {
+      "fileMatch": ["^\\.github/workflows/build\\.yml$"],
+      "matchStrings": [
+        "TERRAFORM_VERSION: (?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "ARG TERRAFORM_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "hashicorp/terraform",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "fileMatch": ["^\\.github/workflows/build\\.yml$"],
+      "matchStrings": [
+        "GH_VERSION: (?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "ARG GH_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "cli/cli",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": [
+        "ARG NODE_VERSION=(?<currentValue>\\d+)"
+      ],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "github-tags"
     }
   ],
   "packageRules": [

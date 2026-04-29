@@ -8,6 +8,13 @@ A lean, browser-automated Ubuntu dev environment with:
 - **Persistent browser profile** — log in once, sessions survive container rebuilds
 - **GH CLI** — authenticated via `GH_TOKEN` env var
 - **Terraform** — version-pinned
+- **Go** — official binary, version-pinned
+- **Rust** — via rustup, stable toolchain
+- **Java / Maven / Gradle** — OpenJDK 21
+- **Ruby** — via rbenv
+- **.NET 8** — SDK + ASP.NET runtime
+- **PHP 8.3** — with common extensions
+- **Elixir / Erlang**
 
 ## Quick Start
 

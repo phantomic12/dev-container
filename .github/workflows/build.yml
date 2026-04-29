@@ -9,6 +9,7 @@ on:
 env:
   GH_VERSION: 2.63.0
   TERRAFORM_VERSION: 1.9.0
+  GO_VERSION: 1.22.5
 
 jobs:
   build:
@@ -51,6 +52,7 @@ jobs:
           build-args: |
             GH_VERSION=${{ env.GH_VERSION }}
             TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }}
+            GO_VERSION=${{ env.GO_VERSION }}
           cache-from: type=gha,mode=max
           cache-to: type=gha,mode=max
           provenance: true
@@ -109,6 +111,16 @@ jobs:
             echo "=== Verifying binaries ==="
             gh version && echo "  ✓ gh"
             terraform version | head -1 && echo "  ✓ terraform"
+            go version && echo "  ✓ go"
+            rustc --version && echo "  ✓ rust"
+            cargo --version && echo "  ✓ cargo"
+            java -version 2>&1 | head -1 && echo "  ✓ java"
+            mvn --version | head -1 && echo "  ✓ maven"
+            ruby --version && echo "  ✓ ruby"
+            dotnet --version && echo "  ✓ dotnet"
+            php --version | head -1 && echo "  ✓ php"
+            elixir --version | head -1 && echo "  ✓ elixir"
+            erl -version 2>&1 | head -1 && echo "  ✓ erlang"
             playwright --version && echo "  ✓ playwright"
             echo "=== Binary check complete ==="
           '

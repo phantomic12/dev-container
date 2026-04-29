@@ -96,6 +96,82 @@ RUN curl -fsSL https://github.com/terraform-linters/tflint/releases/download/v${
 RUN pip3 install --break-system-packages yamllint
 
 ###############################################################################
+# Language runtimes — Go
+###############################################################################
+ARG GO_VERSION=1.22.5
+RUN curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tar.gz && \
+    tar -C /usr/local -xzf /tmp/go.tar.gz && rm /tmp/go.tar.gz
+ENV PATH=/usr/local/go/bin:$PATH
+
+###############################################################################
+# Language runtimes — Rust (via rustup)
+###############################################################################
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
+        --default-toolchain stable \
+        --profile minimal \
+        --no-modify-path \
+        -y && \
+    ln -sf /usr/local/cargo/bin/rustc /usr/local/bin/rustc && \
+    ln -sf /usr/local/cargo/bin/cargo /usr/local/bin/cargo && \
+    ln -sf /usr/local/cargo/bin/rustup /usr/local/bin/rustup
+
+###############################################################################
+# Language runtimes — Java (OpenJDK 21)
+###############################################################################
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends openjdk-21-jdk maven gradle && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+###############################################################################
+# Language runtimes — Ruby (via rbenv)
+###############################################################################
+ENV RBENV_ROOT=/usr/local/rbenv
+ENV PATH=/usr/local/rbenv/bin:/usr/local/rbenv/shims:$PATH
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        build-essential libssl-dev libreadline-dev zlib1g-dev \
+        libyaml-dev libffi-dev libgdbm-dev uuid-dev && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    git clone --depth 1 https://github.com/rbenv/rbenv.git $RBENV_ROOT && \
+    git clone --depth 1 https://github.com/rbenv/ruby-build.git $RBENV_ROOT/plugins/ruby-build && \
+    rbenv install 3.3.4 && rbenv global 3.3.4 && \
+    gem update --system --no-document && \
+    gem install bundler --no-document
+
+###############################################################################
+# Language runtimes — .NET 8
+###############################################################################
+ARG DOTNET_VERSION=8.0
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends wget && \
+    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/msprod.deb && \
+    dpkg -i /tmp/msprod.deb && rm /tmp/msprod.deb && \
+    apt-get update -qq && \
+    apt-get install -y --no-install-recommends dotnet-sdk-8.0 aspnetcore-runtime-8.0 && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+###############################################################################
+# Language runtimes — PHP 8.3
+###############################################################################
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        php8.3 php8.3-cli php8.3-dev php8.3-mbstring php8.3-xml php8.3-curl \
+        php8.3-zip php8.3-sqlite3 php8.3-redis php8.3-bcmath php8.3-gd && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+###############################################################################
+# Language runtimes — Elixir / Erlang
+###############################################################################
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        erlang-base erlang-asn1 erlang-crypto erlang-public-key \
+        erlang-ssl erlang-runtime-tools erlang-inets erlang-mnesia \
+        elixir && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+###############################################################################
 # Browser automation
 ###############################################################################
 RUN npm install -g playwright@latest puppeteer@latest && \
