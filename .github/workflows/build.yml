@@ -72,7 +72,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    if: env.GH_TOKEN != ''
+    if: ${{ secrets.GH_TOKEN != '' }}
 
     steps:
       - name: Checkout
