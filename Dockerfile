@@ -17,46 +17,83 @@ LABEL org.opencontainers.image.title="Ubuntu Dev Container" \
       org.opencontainers.image.licenses="MIT"
 
 ###############################################################################
-# Install system dependencies
+# Install system dependencies — only packages that exist in Ubuntu 24.04 repos
 ###############################################################################
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         # Base utilities
-        curl wget git jq ripgrep fd-find fzf zip unzip tar gzip \
-        ca-certificates gnupg lsb-release \
+        curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release \
         # Build tools
         build-essential gcc g++ make cmake pkg-config \
         libssl-dev libffi-dev zlib1g-dev \
         # Python + Node
         python3 python3-pip python3-venv python3-dev python3-setuptools \
         nodejs npm \
-        # SSH + Tailscale
+        # SSH
         openssh-client openssh-server \
         # Process / system monitoring
         tmux htop tree ncdu lsof netcat ping strace procps \
         # Dev utilities
-        shellcheck shfmt yamllint hadolint tflint parallel yq direnv \
-        sudo locales tzdata man-db less vim nano \
-        # ── Browser stack ────────────────────────────────────────────────
+        parallel direnv sudo locales tzdata man-db less vim nano \
+        # Browser stack
         xvfb x11vnc websockify \
         fonts-firacode fonts-jetbrains-mono fontconfig \
         # Cleanup
         && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ###############################################################################
-# GH (GitHub CLI) — version-pinned for reproducibility
+# Binary tools not in Ubuntu repos — version-pinned
 ###############################################################################
+
+# GH (GitHub CLI)
 ARG GH_VERSION=2.63.0
 RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_linux_amd64.deb -o /tmp/gh.deb && \
     dpkg -i /tmp/gh.deb && rm /tmp/gh.deb
 
-###############################################################################
-# Terraform — version-pinned
-###############################################################################
+# Terraform
 ARG TERRAFORM_VERSION=1.9.0
 RUN curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o /tmp/terraform.zip && \
     unzip -q /tmp/terraform.zip -d /usr/local/bin/ && rm /tmp/terraform.zip
+
+# ripgrep (faster than grep)
+ARG RIPGREP_VERSION=14.1.0
+RUN curl -fsSL https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -o /tmp/ripgrep.tar.gz && \
+    tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
+    mv /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg && \
+    rm -rf /tmp/ripgrep.tar.gz /tmp/ripgrep-*
+
+# fd (alternative to find)
+ARG FD_VERSION=9.0.0
+RUN curl -fsSL https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz -o /tmp/fd.tar.gz && \
+    tar -xzf /tmp/fd.tar.gz -C /tmp && \
+    mv /tmp/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu/fd /usr/local/bin/fd && \
+    rm -rf /tmp/fd.tar.gz /tmp/fd-*
+
+# yq (yaml processor — binary, not apt)
+ARG YQ_VERSION=4.44.2
+RUN curl -fsSL https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 -o /usr/local/bin/yq && \
+    chmod +x /usr/local/bin/yq
+
+# shellcheck (bash linter)
+ARG SHELLCHECK_VERSION=0.10.0
+RUN curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o /tmp/shellcheck.tar.xz && \
+    tar -xJf /tmp/shellcheck.tar.xz -C /tmp && \
+    mv /tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/ && \
+    rm -rf /tmp/shellcheck.tar.xz /tmp/shellcheck-*
+
+# yamllint
+RUN pip3 install --break-system-packages yamllint
+
+# hadolint (Dockerfile linter)
+ARG HADOLINT_VERSION=2.12.0
+RUN curl -fsSL https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint && \
+    chmod +x /usr/local/bin/hadolint
+
+# tflint (Terraform linter)
+ARG TFLINT_VERSION=0.52.0
+RUN curl -fsSL https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip -o /tmp/tflint.zip && \
+    unzip -q /tmp/tflint.zip -d /usr/local/bin/ && chmod +x /usr/local/bin/tflint && rm /tmp/tflint.zip
 
 ###############################################################################
 # Browser automation — Playwright + Puppeteer
@@ -64,7 +101,6 @@ RUN curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/ter
 RUN npm install -g playwright@latest puppeteer@latest && \
     npx playwright install chromium --with-deps
 
-# Python browser packages
 RUN pip3 install --break-system-packages \
         playwright pyppeteer selenium webdriver-manager
 
@@ -81,7 +117,7 @@ RUN npm install -g pnpm yarn n typescript ts-node ts-node-dev \
                     eslint prettier dotenv-cli
 
 ###############################################################################
-# noVNC (web-based VNC — serves the browser UI over HTTP/WebSocket)
+# noVNC (web-based VNC)
 ###############################################################################
 RUN npm install -g @novnc/novnc && \
     mkdir -p /usr/share/novnc
@@ -92,7 +128,7 @@ RUN npm install -g @novnc/novnc && \
 RUN locale-gen en_US.UTF-8
 
 ###############################################################################
-# User setup — UID/GID overridden at build via docker-compose args
+# User setup
 ###############################################################################
 ARG WANTED_UID=1000
 ARG WANTED_GID=1000
@@ -111,21 +147,19 @@ USER ${USERNAME}
 WORKDIR /workspace
 
 ###############################################################################
-# Entrypoint — Tailscale + SSH + GH auth + startup message
+# Entrypoint
 ###############################################################################
 COPY --chmod=755 <<"ENTRYPOINT_SCRIPT" /entrypoint.sh
 #!/bin/bash
 set -euo pipefail
 
-# ── GH auth (multi-user token) ─────────────────────────────────────────────
-# Set GH_TOKEN at runtime to auth the CLI without interactive login:
-#   docker compose run -e GH_TOKEN=ghp_xxx dev gh auth status
+# ── GH auth ────────────────────────────────────────────────────────────────
 if [[ -n "${GH_TOKEN:-}" ]]; then
     echo "[entrypoint] GH_TOKEN detected — authenticating gh CLI..."
     gh auth login --hostname github.com --token "$GH_TOKEN" 2>/dev/null || \
     gh auth status || true
 elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    echo "[entrypoint] GITHUB_TOKEN detected — authenticating gh cli..."
+    echo "[entrypoint] GITHUB_TOKEN detected — authenticating gh CLI..."
     gh auth login --hostname github.com --token "$GITHUB_TOKEN" 2>/dev/null || \
     gh auth status || true
 else
