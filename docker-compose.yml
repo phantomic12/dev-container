@@ -1,0 +1,76 @@
+# docker-compose.yml — Ubuntu Dev Container
+#
+# Usage:
+#   cp .env.example .env
+#   # edit .env — set TAILSCALE_AUTH_KEY, WANTED_UID, WANTED_GID, HOME_DIR
+#   docker compose up -d
+#   docker compose exec dev-container bash
+#
+# Browser (noVNC):
+#   open http://localhost:6080/vnc.html   # VNC in your browser
+#   open http://localhost:9222/json      # CDP API
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-ubuntu:24.04}
+        WANTED_UID: ${WANTED_UID:-1000}
+        WANTED_GID: ${WANTED_GID:-1000}
+        USERNAME: ${USERNAME:-dev}
+    container_name: ${CONTAINER_NAME:-dev-container}
+    hostname: ${CONTAINER_HOSTNAME:-dev-container}
+    volumes:
+      # Persistent browser profile — sessions/logins survive container rebuilds
+      - ${BROWSER_PROFILE_DIR:-./browser-profile}:/browser-profile:rw
+      # Home directory — bind-mount your host path → /home/dev
+      - ${HOME_DIR:-~/dev-home}:/home/dev:rw
+      # Workspace for project work
+      - ${WORKSPACE_DIR:-~/workspace}:/workspace:rw
+      # Docker socket
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      # Tailscale socket (optional)
+      - /var/run/tailscale:/var/run/tailscale:ro
+    environment:
+      # ── Tailscale ──────────────────────────────────────────
+      TAILSCALE_AUTH_KEY: ${TAILSCALE_AUTH_KEY:-}
+      TAILSCALE_HOSTNAME: ${TAILSCALE_HOSTNAME:-}
+      # ── SSH ───────────────────────────────────────────────
+      SSH_AUTHORIZED_KEYS: ${SSH_AUTHORIZED_KEYS:-}
+      DEV_PASSWORD: ${DEV_PASSWORD:-}
+      # ── Locale / timezone ─────────────────────────────────
+      TZ: ${TZ:-America/New_York}
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      # ── Tool auth tokens ────────────────────────────────────
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GH_TOKEN: ${GH_TOKEN:-}
+      # ── Browser automation ──────────────────────────────────
+      DISPLAY: ":99"
+      BROWSER_PROFILE_DIR: /browser-profile
+      CDP_PORT: ${CDP_PORT:-9222}
+      VNC_PORT: ${VNC_PORT:-5900}
+      NOVNC_PORT: ${NOVNC_PORT:-6080}
+    ports:
+      - "${SSH_PORT:-2222}:22"
+      - "${VNC_PORT:-5900}:5900"      # VNC
+      - "${DEBUG_PORT:-9222}:9222"    # Chrome DevTools / CDP
+      - "${NOVNC_PORT:-6080}:6080"    # noVNC (browser VNC client)
+    shm_size: 2gb
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      nproc:
+        soft: 4096
+        hard: 4096
+    restart: ${RESTART_POLICY:-unless-stopped}
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    name: ${NETWORK_NAME:-dev-net}
+    driver: bridge

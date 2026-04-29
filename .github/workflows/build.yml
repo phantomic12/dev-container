@@ -1,0 +1,121 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  # ── Version pins — update here to bump versions in the build ────────────
+  GH_VERSION: 2.63.0
+  TERRAFORM_VERSION: 1.9.0
+  # ── GH token — use GITHUB_TOKEN for own repo, or a fine-grained PAT ─────
+  GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=,suffix=,format=short
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            GH_VERSION=${{ env.GH_VERSION }}
+            TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Inspect image
+        run: |
+          docker images ghcr.io/${{ github.repository }}:${{ github.sha }} --format \
+            "Image: {{.Repository}}:{{.Tag}}  Size: {{.Size}}  Created: {{.CreatedSince}}"
+
+  test-container:
+    name: Smoke-test container
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Only run if GH_TOKEN is available for auth test
+    if: env.GH_TOKEN != ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull image
+        run: docker pull ${{ needs.build.outputs.image-tag }}
+
+      - name: Start container
+        run: |
+          docker run -d --rm \
+            --name smoke-test \
+            -e GH_TOKEN=${{ env.GH_TOKEN }} \
+            -e TAILSCALE_AUTH_KEY=dummy \
+            ${{ needs.build.outputs.image-tag }} \
+            sleep infinity
+
+      - name: Wait for startup
+        run: sleep 10
+
+      - name: Verify binaries
+        run: |
+          docker exec smoke-test bash -c '
+            set -e
+            echo "=== Verifying binaries ==="
+
+            gh version
+            echo "  ✓ gh"
+
+            terraform version | head -1
+            echo "  ✓ terraform"
+
+            google-chrome --version
+            echo "  ✓ google-chrome"
+
+            chromium-browser --version
+            echo "  ✓ chromium-browser"
+
+            playwright --version
+            echo "  ✓ playwright"
+
+            puppeteer --version
+            echo "  ✓ puppeteer"
+
+            echo ""
+            echo "=== All binaries present ==="
+          '
+
+      - name: GH auth status
+        run: |
+          docker exec smoke-test gh auth status
+
+      - name: Cleanup
+        if: always()
+        run: docker stop smoke-test

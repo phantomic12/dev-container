@@ -1,0 +1,50 @@
+# Environment
+.env
+.env.local
+*.env
+
+# Browser profile (keep sessions but ignore the directory structure)
+browser-profile/
+# If you want to keep some browser state but not all:
+# browser-profile/Default/
+# browser-profile/Sessions/
+
+# Workspace (usually a symlink or empty dir)
+workspace/
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Node
+node_modules/
+.npm
+*.log
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Credentials / secrets (scan for these before committing)
+*secret*
+*credential*
+*.pem
+*.key
