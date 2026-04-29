@@ -135,12 +135,16 @@ ARG WANTED_UID=1000
 ARG WANTED_GID=1000
 ARG USERNAME=dev
 
-RUN existing_gid=$(getent group ${WANTED_GID} | cut -d: -f3) || true && \
-    if [[ -n "$existing_gid" ]]; then \
-        echo "GID ${WANTED_GID} already exists as group '$(getent group ${WANTED_GID} | cut -d: -f1)'"; \
+RUN group_name=$(getent group ${WANTED_GID} | cut -d: -f1) && \
+    if [[ "$group_name" == "${USERNAME}" ]]; then \
+        echo "Group ${USERNAME} with GID ${WANTED_GID} already exists"; \
+    elif [[ -n "$group_name" ]]; then \
+        echo "GID ${WANTED_GID} taken by '$group_name' — using existing group"; \
+        useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME} 2>/dev/null || true; \
+    else \
+        groupadd --gid ${WANTED_GID} ${USERNAME} && \
+        useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}; \
     fi && \
-    getent group ${USERNAME} >/dev/null 2>&1 || groupadd --gid ${WANTED_GID} ${USERNAME} && \
-    (id ${USERNAME} >/dev/null 2>&1 || useradd --uid ${WANTED_UID} --gid ${WANTED_GID} --create-home --shell /bin/bash ${USERNAME}) && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
     mkdir -p /home/${USERNAME}/.config/gh && \
     chown -R ${WANTED_UID}:${WANTED_GID} /home/${USERNAME} && \
