@@ -22,25 +22,23 @@ LABEL org.opencontainers.image.title="Ubuntu Dev Container" \
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        # Base utilities
-        curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release \
-        # Build tools
+        curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release && \
+    apt-get install -y --no-install-recommends \
         build-essential gcc g++ make cmake pkg-config \
-        libssl-dev libffi-dev zlib1g-dev \
-        # Python + Node
+        libssl-dev libffi-dev zlib1g-dev && \
+    apt-get install -y --no-install-recommends \
         python3 python3-pip python3-venv python3-dev python3-setuptools \
-        nodejs npm \
-        # SSH
-        openssh-client openssh-server \
-        # Process / system monitoring
-        tmux htop tree ncdu lsof netcat ping strace procps \
-        # Dev utilities
-        parallel direnv sudo locales tzdata man-db less vim nano \
-        # Browser stack
-        xvfb x11vnc websockify \
-        fonts-firacode fonts-jetbrains-mono fontconfig \
-        # Cleanup
-        || { echo "=== APT FAILED ==="; apt-get update -qq; apt-get install -y --no-install-recommends curl wget git jq zip unzip tar gzip ca-certificates gnupg lsb-release build-essential gcc g++ make cmake pkg-config libssl-dev libffi-dev zlib1g-dev python3 python3-pip python3-venv python3-dev python3-setuptools nodejs npm openssh-client openssh-server tmux htop tree ncdu lsof netcat ping strace procps parallel direnv sudo locales tzdata man-db less vim nano xvfb x11vnc websockify fonts-firacode fonts-jetbrains-mono fontconfig; } && \
+        nodejs npm && \
+    apt-get install -y --no-install-recommends \
+        openssh-client openssh-server && \
+    apt-get install -y --no-install-recommends \
+        tmux htop tree ncdu lsof netcat ping strace procps && \
+    apt-get install -y --no-install-recommends \
+        parallel direnv sudo locales tzdata man-db less vim nano && \
+    apt-get install -y --no-install-recommends \
+        xvfb x11vnc websockify && \
+    apt-get install -y --no-install-recommends \
+        fonts-firacode fonts-jetbrains-mono fontconfig && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ###############################################################################
