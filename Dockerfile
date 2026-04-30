@@ -191,7 +191,7 @@ RUN pip3 install --break-system-packages \
 # Node global packages
 ###############################################################################
 RUN npm install -g pnpm yarn n typescript ts-node ts-node-dev \
-                    eslint prettier dotenv-cli
+                    eslint prettier dotenv-cli wrangler
 
 ###############################################################################
 # noVNC
@@ -247,6 +247,18 @@ elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
     gh auth status || true
 else
     echo "[entrypoint] No GH_TOKEN / GITHUB_TOKEN set — gh CLI not authenticated."
+fi
+
+# ── Cloudflare auth (Wrangler) ─────────────────────────────────────────────
+if [[ -n "${CLOUDFLARE_API_KEY:-}" ]]; then
+    echo "[entrypoint] CLOUDFLARE_API_KEY detected — configuring wrangler..."
+    export CW_API_TOKEN="$CLOUDFLARE_API_KEY"
+    npx wrangler login --api-token "$CLOUDFLARE_API_KEY" 2>/dev/null || \
+    npx wrangler whoami 2>/dev/null || true
+elif [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+    echo "[entrypoint] CLOUDFLARE_ACCOUNT_ID set — wrangler configured (token required for deploys)"
+else
+    echo "[entrypoint] No CLOUDFLARE_API_KEY set — wrangler not authenticated."
 fi
 
 # ── Tailscale ────────────────────────────────────────────────────────────────

@@ -120,6 +120,7 @@ jobs:
             dotnet --version && echo "  ✓ dotnet"
             php --version | head -1 && echo "  ✓ php"
             elixir --version | head -1 && echo "  ✓ elixir"
+            npx wrangler --version && echo "  ✓ wrangler"
             erl -version 2>&1 | head -1 && echo "  ✓ erlang"
             playwright --version && echo "  ✓ playwright"
             echo "=== Binary check complete ==="

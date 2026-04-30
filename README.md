@@ -15,6 +15,7 @@ A lean, browser-automated Ubuntu dev environment with:
 - **.NET 8** — SDK + ASP.NET runtime
 - **PHP 8.3** — with common extensions
 - **Elixir / Erlang**
+- **Wrangler / Cloudflare Workers** — deploy to Cloudflare Workers/W Pages
 
 ## Quick Start
 
@@ -69,6 +70,8 @@ The `GH_TOKEN` env var is authed automatically at container start via `gh auth l
 | `GH_TOKEN` | — | GH personal access token (multi-user) |
 | `GITHUB_TOKEN` | — | Fallback GH token |
 | `TAILSCALE_AUTH_KEY` | — | Tailscale auth key |
+| `CLOUDFLARE_API_KEY` | — | Cloudflare API token for Wrangler |
+| `CLOUDFLARE_ACCOUNT_ID` | — | Cloudflare account ID |
 | `BROWSER_PROFILE_DIR` | `./browser-profile` | Persistent browser session dir |
 | `BROWSER_RESOLUTION` | `1920x1080` | Virtual display resolution |
 | `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
