@@ -94,11 +94,12 @@ jobs:
 
       - name: Start container (override entrypoint to skip startup)
         run: |
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tag }}" | head -1)
           docker run -d --rm \
             --name smoke-test \
             --privileged \
             -e TAILSCALE_AUTH_KEY=*** \
-            ${{ needs.build.outputs.image-tag }} \
+            $IMAGE_TAG \
             tail -f /dev/null
 
       - name: Wait for startup
