@@ -41,7 +41,9 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: type=sha,format=short
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' || github.ref_name == 'master' }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
