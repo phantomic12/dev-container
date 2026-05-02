@@ -90,7 +90,7 @@ jobs:
           echo "Available tags:"
           docker images ghcr.io/${{ github.repository }}
           echo "Pulling: ${{ needs.build.outputs.image-tag }}"
-          docker pull ${{ needs.build.outputs.image-tag }}
+          echo "${{ needs.build.outputs.image-tag }}" | head -1 | xargs docker pull
 
       - name: Start container (override entrypoint to skip startup)
         run: |
