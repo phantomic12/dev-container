@@ -98,7 +98,7 @@ RUN pip3 install --break-system-packages yamllint
 ###############################################################################
 # Language runtimes — Go
 ###############################################################################
-ARG GO_VERSION=1.22.5
+ARG GO_VERSION=1.26.2
 RUN curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tar.gz && \
     tar -C /usr/local -xzf /tmp/go.tar.gz && rm /tmp/go.tar.gz
 ENV PATH=/usr/local/go/bin:$PATH
