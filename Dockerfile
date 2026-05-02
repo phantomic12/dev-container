@@ -8,7 +8,7 @@
 #   VNC    : vnc://localhost:5900
 ###############################################################################
 
-ARG BASE_IMAGE=ubuntu:26.04
+ARG BASE_IMAGE=ubuntu:24.04
 FROM $BASE_IMAGE
 
 LABEL org.opencontainers.image.title="Ubuntu Dev Container" \
@@ -48,48 +48,48 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
 
 # GH
 ARG GH_VERSION=2.63.0
-RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.deb -o /tmp/gh.deb && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.deb -o /tmp/gh.deb && \
     dpkg -i /tmp/gh.deb && rm /tmp/gh.deb
 
 # Terraform
 ARG TERRAFORM_VERSION=1.9.0
-RUN curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o /tmp/terraform.zip && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o /tmp/terraform.zip && \
     unzip -q /tmp/terraform.zip -d /usr/local/bin/ && rm /tmp/terraform.zip
 
 # ripgrep
 ARG RIPGREP_VERSION=14.1.0
-RUN curl -fsSL https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -o /tmp/ripgrep.tar.gz && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -o /tmp/ripgrep.tar.gz && \
     tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
     mv /tmp/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl/rg /usr/local/bin/rg && \
     rm -rf /tmp/ripgrep.tar.gz /tmp/ripgrep-*
 
 # fd
 ARG FD_VERSION=9.0.0
-RUN curl -fsSL https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz -o /tmp/fd.tar.gz && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz -o /tmp/fd.tar.gz && \
     tar -xzf /tmp/fd.tar.gz -C /tmp && \
     mv /tmp/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu/fd /usr/local/bin/fd && \
     rm -rf /tmp/fd.tar.gz /tmp/fd-*
 
 # yq
 ARG YQ_VERSION=4.44.2
-RUN curl -fsSL https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 -o /usr/local/bin/yq && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64 -o /usr/local/bin/yq && \
     chmod +x /usr/local/bin/yq
 
 # shellcheck
 ARG SHELLCHECK_VERSION=0.10.0
-RUN curl -fsSL https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o /tmp/shellcheck.tar.xz && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o /tmp/shellcheck.tar.xz && \
     tar -xJf /tmp/shellcheck.tar.xz -C /tmp && \
     mv /tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/ && \
     rm -rf /tmp/shellcheck.tar.xz /tmp/shellcheck-*
 
 # hadolint
 ARG HADOLINT_VERSION=2.12.0
-RUN curl -fsSL https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64 -o /usr/local/bin/hadolint && \
     chmod +x /usr/local/bin/hadolint
 
 # tflint
 ARG TFLINT_VERSION=0.52.0
-RUN curl -fsSL https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip -o /tmp/tflint.zip && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip -o /tmp/tflint.zip && \
     unzip -q /tmp/tflint.zip -d /usr/local/bin/ && chmod +x /usr/local/bin/tflint && rm /tmp/tflint.zip
 
 # yamllint
@@ -99,7 +99,7 @@ RUN pip3 install --break-system-packages yamllint
 # Language runtimes — Go
 ###############################################################################
 ARG GO_VERSION=1.26.2
-RUN curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tar.gz && \
+RUN curl -fsSL --retry 3 --retry-delay 5 https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tar.gz && \
     tar -C /usr/local -xzf /tmp/go.tar.gz && rm /tmp/go.tar.gz
 ENV PATH=/usr/local/go/bin:$PATH
 
@@ -265,7 +265,7 @@ fi
 if [[ -n "${TAILSCALE_AUTH_KEY:-}" ]]; then
     echo "[entrypoint] Configuring Tailscale..."
     if ! command -v tailscale &> /dev/null; then
-        curl -fsSL https://tailscale.com/install.sh | sh
+        curl -fsSL --retry 3 --retry-delay 5 https://tailscale.com/install.sh | sh
     fi
     tailscale up \
         --authkey="${TAILSCALE_AUTH_KEY}" \
