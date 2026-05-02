@@ -8,7 +8,7 @@
 #   VNC    : vnc://localhost:5900
 ###############################################################################
 
-ARG BASE_IMAGE=ubuntu:24.04
+ARG BASE_IMAGE=ubuntu:26.04
 FROM $BASE_IMAGE
 
 LABEL org.opencontainers.image.title="Ubuntu Dev Container" \
