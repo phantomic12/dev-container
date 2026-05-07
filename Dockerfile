@@ -35,8 +35,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Pre-generate SSH host keys so sshd doesn't complain
-RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -C '' && \\
-    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -C '' && \\
+RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -C '' && \
+    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -C '' && \
     sed -i 's/#HostKey/HostKey/' /etc/ssh/sshd_config
 
 ###############################################################################
