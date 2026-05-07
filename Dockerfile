@@ -34,11 +34,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Pre-generate SSH host keys so sshd doesn't complain
-RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -C '' -y && \
-    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -C '' -y && \
-    sed -i 's/#HostKey/HostKey/' /etc/ssh/sshd_config
-
 ###############################################################################
 # Node.js from NodeSource
 ###############################################################################
@@ -290,14 +285,13 @@ if [[ -f ~/.ssh/authorized_keys ]] || [[ -n "${SSH_AUTHORIZED_KEYS:-}" ]]; then
         echo "${SSH_AUTHORIZED_KEYS}" > ~/.ssh/authorized_keys
     fi
     chmod 600 ~/.ssh/authorized_keys
-    # Generate SSH host keys if they don't exist
-    if [[ ! -f /etc/ssh/ssh_host_rsa_key ]]; then
-        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -C '' 2>/dev/null || true
+    # Generate SSH host keys in /run/sshd (dev-writable) to avoid seccomp DAC restrictions on /etc/ssh/
+    mkdir -p /run/sshd && chmod 0755 /run/sshd
+    if [[ ! -f /run/sshd/ssh_host_ed25519_key ]]; then
+        ssh-keygen -t ed25519 -f /run/sshd/ssh_host_ed25519_key -N '' -C '' 2>/dev/null || true
     fi
-    if [[ ! -f /etc/ssh/ssh_host_ed25519_key ]]; then
-        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -C '' 2>/dev/null || true
-    fi
-    /usr/sbin/sshd
+    chown -R dev:ubuntu /run/sshd
+    /usr/sbin/sshd -h /run/sshd/ssh_host_ed25519_key
 else
     echo "[entrypoint] No SSH keys found — sshd not started."
 fi
