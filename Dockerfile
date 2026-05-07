@@ -279,12 +279,19 @@ fi
 
 # ── SSH ──────────────────────────────────────────────────────────────────────
 if [[ -f ~/.ssh/authorized_keys ]] || [[ -n "${SSH_AUTHORIZED_KEYS:-}" ]]; then
-    echo "[entrypoint] SSH keys detected — starting sshd..."
+    echo "[entrypoint] SSH keys detected — generating host keys and starting sshd..."
     mkdir -p ~/.ssh && chmod 700 ~/.ssh
     if [[ -n "${SSH_AUTHORIZED_KEYS:-}" ]]; then
         echo "${SSH_AUTHORIZED_KEYS}" > ~/.ssh/authorized_keys
     fi
     chmod 600 ~/.ssh/authorized_keys
+    # Generate SSH host keys if they don't exist
+    if [[ ! -f /etc/ssh/ssh_host_rsa_key ]]; then
+        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -C '' 2>/dev/null || true
+    fi
+    if [[ ! -f /etc/ssh/ssh_host_ed25519_key ]]; then
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -C '' 2>/dev/null || true
+    fi
     /usr/sbin/sshd
 else
     echo "[entrypoint] No SSH keys found — sshd not started."
