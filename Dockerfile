@@ -286,11 +286,10 @@ if [[ -f ~/.ssh/authorized_keys ]] || [[ -n "${SSH_AUTHORIZED_KEYS:-}" ]]; then
     fi
     chmod 600 ~/.ssh/authorized_keys
     # Generate SSH host keys in /run/sshd (dev-writable) to avoid seccomp DAC restrictions on /etc/ssh/
-    mkdir -p /run/sshd && chmod 0755 /run/sshd
+    sudo mkdir -p /run/sshd && sudo chown dev:ubuntu /run/sshd
     if [[ ! -f /run/sshd/ssh_host_ed25519_key ]]; then
         ssh-keygen -t ed25519 -f /run/sshd/ssh_host_ed25519_key -N '' -C '' 2>/dev/null || true
     fi
-    chown -R dev:ubuntu /run/sshd
     /usr/sbin/sshd -h /run/sshd/ssh_host_ed25519_key
 else
     echo "[entrypoint] No SSH keys found — sshd not started."
