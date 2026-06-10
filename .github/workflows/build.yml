@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 env:
-  GH_VERSION: 2.93.0
+  GH_VERSION: 2.94.0
   TERRAFORM_VERSION: 1.15.5
   GO_VERSION: 1.26.4
 
