@@ -57,7 +57,7 @@ RUN curl -fsSL --retry 3 --retry-delay 5 https://releases.hashicorp.com/terrafor
     unzip -q /tmp/terraform.zip -d /usr/local/bin/ && rm /tmp/terraform.zip
 
 # Bitwarden CLI
-ARG BW_VERSION=2024.11.1
+ARG BW_VERSION=2026.5.0
 RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/bitwarden/clients/releases/download/cli-v${BW_VERSION}/bw-linux-${BW_VERSION}.zip -o /tmp/bw.zip && \
     unzip -q /tmp/bw.zip -d /tmp/bw && \
     install -m 0755 /tmp/bw/bw /usr/local/bin/bw && \
