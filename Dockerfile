@@ -258,6 +258,17 @@ COPY --chmod=755 <<"ENTRYPOINT_SCRIPT" /entrypoint.sh
 #!/bin/bash
 set -euo pipefail
 
+# ── Reclaim /workspace and /browser-profile from root (tmpfs/bind-mount default) ──
+# When hermes-agent's docker backend spawns this image without
+# --user, /workspace and /browser-profile are owned by root:root with
+# mode 755 (tmpfs) or by the host bind-mount's uid (persistent mode).
+# chown them to the dev user (uid from /etc/passwd lookup) so tools
+# invoked by `dev` can actually write here. Idempotent and cheap.
+if id dev >/dev/null 2>&1; then
+    chown -R dev:ubuntu /workspace /browser-profile 2>/dev/null || true
+    chmod 755 /workspace /browser-profile 2>/dev/null || true
+fi
+
 # ── GH auth ────────────────────────────────────────────────────────────────
 if [[ -n "${GH_TOKEN:-}" ]]; then
     echo "[entrypoint] GH_TOKEN detected — authenticating gh CLI..."
