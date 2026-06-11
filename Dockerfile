@@ -56,6 +56,13 @@ ARG TERRAFORM_VERSION=1.9.0
 RUN curl -fsSL --retry 3 --retry-delay 5 https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o /tmp/terraform.zip && \
     unzip -q /tmp/terraform.zip -d /usr/local/bin/ && rm /tmp/terraform.zip
 
+# Bitwarden CLI
+ARG BW_VERSION=2024.11.1
+RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/bitwarden/clients/releases/download/cli-v${BW_VERSION}/bw-linux-${BW_VERSION}.zip -o /tmp/bw.zip && \
+    unzip -q /tmp/bw.zip -d /tmp/bw && \
+    install -m 0755 /tmp/bw/bw /usr/local/bin/bw && \
+    rm -rf /tmp/bw /tmp/bw.zip
+
 # ripgrep
 ARG RIPGREP_VERSION=14.1.0
 RUN curl -fsSL --retry 3 --retry-delay 5 https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl.tar.gz -o /tmp/ripgrep.tar.gz && \
@@ -275,6 +282,21 @@ if [[ -n "${TAILSCALE_AUTH_KEY:-}" ]]; then
     echo "[entrypoint] Tailscale connected. IP: $(tailscale ip -4 2>/dev/null || echo 'N/A')"
 else
     echo "[entrypoint] TAILSCALE_AUTH_KEY not set — skipping Tailscale."
+fi
+
+# ── Bitwarden CLI ──────────────────────────────────────────────────────────
+if [[ -n "${BW_CLIENTID:-}" && -n "${BW_CLIENTSECRET:-}" ]]; then
+    echo "[entrypoint] BW_CLIENTID/BW_CLIENTSECRET detected — logging bw CLI in via API key..."
+    bw config server "${BW_SERVER:-https://vault.bitwarden.com}" 2>/dev/null || true
+    if BW_CLIENTID="$BW_CLIENTID" BW_CLIENTSECRET="$BW_CLIENTSECRET" \
+            bw login --apikey --nointeraction 2>/dev/null; then
+        echo "[entrypoint] bw CLI logged in. Run: export BW_SESSION=\$(bw unlock --raw)"
+    else
+        echo "[entrypoint] bw API key login failed — set BW_SESSION manually or run 'bw login' interactively."
+    fi
+else
+    echo "[entrypoint] BW_CLIENTID/BW_CLIENTSECRET not set — bw CLI installed but not authenticated."
+    echo "[entrypoint]   To unlock: bw login && export BW_SESSION=\$(bw unlock --raw)"
 fi
 
 # ── SSH ──────────────────────────────────────────────────────────────────────

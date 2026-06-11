@@ -7,6 +7,7 @@ A lean, browser-automated Ubuntu dev environment with:
 - **VNC** — connect with any desktop VNC client (`vnc://localhost:5900`)
 - **Persistent browser profile** — log in once, sessions survive container rebuilds
 - **GH CLI** — authenticated via `GH_TOKEN` env var
+- **Bitwarden CLI** — `bw` for vault unlock + secret retrieval (`BW_CLIENTID`/`BW_CLIENTSECRET` env vars)
 - **Terraform** — version-pinned
 - **Go** — official binary, version-pinned
 - **Rust** — via rustup, stable toolchain
@@ -72,6 +73,9 @@ The `GH_TOKEN` env var is authed automatically at container start via `gh auth l
 | `TAILSCALE_AUTH_KEY` | — | Tailscale auth key |
 | `CLOUDFLARE_API_KEY` | — | Cloudflare API token for Wrangler |
 | `CLOUDFLARE_ACCOUNT_ID` | — | Cloudflare account ID |
+| `BW_CLIENTID` | — | Bitwarden API key client_id (enables `bw login --apikey` at startup) |
+| `BW_CLIENTSECRET` | — | Bitwarden API key client_secret (pair with BW_CLIENTID) |
+| `BW_SERVER` | `https://vault.bitwarden.com` | Bitwarden server URL (for self-hosted) |
 | `BROWSER_PROFILE_DIR` | `./browser-profile` | Persistent browser session dir |
 | `BROWSER_RESOLUTION` | `1920x1080` | Virtual display resolution |
 | `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
