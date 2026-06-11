@@ -237,7 +237,8 @@ RUN if getent passwd ${USERNAME} >/dev/null 2>&1; then \
     mkdir -p /home/${USERNAME}/.config/gh; \
     chown -R $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /home/${USERNAME}; \
     mkdir -p /workspace /browser-profile; \
-    chown $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /workspace /browser-profile && \
+    chown $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /workspace /browser-profile; \
+    chmod 1777 /workspace /browser-profile && \
     # Add dev user to the host's docker group (gid configurable via DOCKER_GID)
     # so /var/run/docker.sock mounted from the host is accessible.
     if [[ -n "${DOCKER_GID:-}" ]] && ! getent group ${DOCKER_GID} >/dev/null 2>&1; then \
@@ -257,18 +258,6 @@ WORKDIR /workspace
 COPY --chmod=755 <<"ENTRYPOINT_SCRIPT" /entrypoint.sh
 #!/bin/bash
 set -euo pipefail
-
-# ── Reclaim /workspace and /browser-profile from root (tmpfs/bind-mount default) ──
-# When hermes-agent's docker backend spawns this image without
-# --user, /workspace and /browser-profile are owned by root:root with
-# mode 755 (tmpfs) or by the host bind-mount's uid (persistent mode).
-# We (the dev user) can't chown these ourselves — CAP_CHOWN is only
-# effective when held by the running uid. Sudo to root briefly to do
-# the chown, then drop back. Idempotent and cheap.
-if id dev >/dev/null 2>&1; then
-    sudo -n chown -R dev:ubuntu /workspace /browser-profile 2>/dev/null || true
-    sudo -n chmod 755 /workspace /browser-profile 2>/dev/null || true
-fi
 
 # ── GH auth ────────────────────────────────────────────────────────────────
 if [[ -n "${GH_TOKEN:-}" ]]; then
