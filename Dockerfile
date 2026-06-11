@@ -262,11 +262,12 @@ set -euo pipefail
 # When hermes-agent's docker backend spawns this image without
 # --user, /workspace and /browser-profile are owned by root:root with
 # mode 755 (tmpfs) or by the host bind-mount's uid (persistent mode).
-# chown them to the dev user (uid from /etc/passwd lookup) so tools
-# invoked by `dev` can actually write here. Idempotent and cheap.
+# We (the dev user) can't chown these ourselves — CAP_CHOWN is only
+# effective when held by the running uid. Sudo to root briefly to do
+# the chown, then drop back. Idempotent and cheap.
 if id dev >/dev/null 2>&1; then
-    chown -R dev:ubuntu /workspace /browser-profile 2>/dev/null || true
-    chmod 755 /workspace /browser-profile 2>/dev/null || true
+    sudo -n chown -R dev:ubuntu /workspace /browser-profile 2>/dev/null || true
+    sudo -n chmod 755 /workspace /browser-profile 2>/dev/null || true
 fi
 
 # ── GH auth ────────────────────────────────────────────────────────────────
