@@ -217,6 +217,12 @@ RUN locale-gen en_US.UTF-8
 ARG WANTED_UID=1000
 ARG WANTED_GID=1000
 ARG USERNAME=dev
+# Optional supplementary group (e.g., host `docker` group gid) added to the
+# dev user so the container can access a bind-mounted /var/run/docker.sock
+# when run with `docker_run_as_host_user: true`. Defaults to 988 (Ubuntu's
+# docker group gid) — override via --build-arg DOCKER_GID=<gid> if your
+# host uses a different gid. Set to empty string to skip.
+ARG DOCKER_GID=988
 
 RUN if getent passwd ${USERNAME} >/dev/null 2>&1; then \
         echo "User ${USERNAME} already exists"; \
@@ -231,7 +237,16 @@ RUN if getent passwd ${USERNAME} >/dev/null 2>&1; then \
     mkdir -p /home/${USERNAME}/.config/gh; \
     chown -R $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /home/${USERNAME}; \
     mkdir -p /workspace /browser-profile; \
-    chown $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /workspace /browser-profile
+    chown $(id -u ${USERNAME}):$(getent group ${WANTED_GID} | cut -d: -f3) /workspace /browser-profile && \
+    # Add dev user to the host's docker group (gid configurable via DOCKER_GID)
+    # so /var/run/docker.sock mounted from the host is accessible.
+    if [[ -n "${DOCKER_GID:-}" ]] && ! getent group ${DOCKER_GID} >/dev/null 2>&1; then \
+        groupadd --gid ${DOCKER_GID} docker-host; \
+    fi && \
+    if [[ -n "${DOCKER_GID:-}" ]] && getent group ${DOCKER_GID} >/dev/null 2>&1; then \
+        usermod -aG ${DOCKER_GID} ${USERNAME} && \
+        echo "[entrypoint-build] Added ${USERNAME} to gid ${DOCKER_GID} for docker socket access"; \
+    fi
 
 USER ${USERNAME}
 WORKDIR /workspace
